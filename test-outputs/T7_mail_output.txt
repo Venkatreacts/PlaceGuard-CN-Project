@@ -1,0 +1,17 @@
+T7 (mail part) - HQ-HR-PC sends offer letter to student1@srm.edu over the VPN; STU-PC1 receives it
+
+Mail client config: HQ-HR-PC hr.technova@srm.edu, STU-PC1 student1@srm.edu, servers 172.16.50.13
+
+Events (SMTP send / POP3 receive):
+SENT {"body":"Dear Student One, congratulations! Your TechNova offer letter is attached. - TechNova HR","dest":"student1@srm.edu","responseType":9,"subject":"TechNova offer letter"}
+SENT {"body":"Dear Student One, congratulations! Your TechNova offer letter is attached. - TechNova HR","dest":"student1@srm.edu","responseType":2,"subject":"TechNova offer letter"}
+RECEIVED {"body":"Dear Student One, congratulations! Your TechNova offer letter is attached. - TechNova HR","dateTime":"11.13.2026 03:46:40.971 PM","sender":"hr.technova@srm.edu","subject":"TechNova offer letter"}
+
+STU-PC1 inbox after Receive: 0 message(s)
+[]
+
+FW-DC counters:
+access-list CAMPUS_IN line 13 extended permit tcp 10.10.0.0 255.255.0.0 host 172.16.50.13 eq smtp(hitcnt=0) 0xa81ac246
+access-list CAMPUS_IN line 14 extended permit tcp 10.10.0.0 255.255.0.0 host 172.16.50.13 eq pop3(hitcnt=1) 0xc6147932
+access-list CAMPUS_IN line 15 extended permit tcp 192.168.50.0 255.255.255.0 host 172.16.50.13 eq smtp(hitcnt=2) 0x623623ba
+access-list CAMPUS_IN line 16 extended permit tcp 192.168.50.0 255.255.255.0 host 172.16.50.13 eq pop3(hitcnt=0) 0x817714c6

@@ -1,0 +1,11 @@
+# OS / editor
+Thumbs.db
+desktop.ini
+.DS_Store
+~$*
+*.tmp
+__pycache__/
+
+# Office source files (only PDFs are published)
+*.docx
+*.pptx

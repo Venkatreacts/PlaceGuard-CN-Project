@@ -1,0 +1,40 @@
+B3 - Campus-initiated traffic to TechNova HQ (Zone-Based Firewall)
+
+--- PLC-OFFICER -> HQ-HR-PC ---
+ping -n 4 192.168.50.11
+
+Pinging 192.168.50.11 with 32 bytes of data:
+
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+
+Ping statistics for 192.168.50.11:
+    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),
+
+C:\>
+R-RECRUITER# show zone-pair security
+Zone-pair name IN-TO-OUT
+    Source-Zone INSIDE  Destination-Zone OUTSIDE 
+    service-policy HQ-OUT-POLICY
+
+
+
+R-RECRUITER# show policy-map type inspect zone-pair sessions
+
+policy exists on zp IN-TO-OUT
+ Zone-pair: IN-TO-OUT
+
+  Service-policy inspect : HQ-OUT-POLICY
+
+    Class-map: HQ-OUTBOUND (match-all)
+      Match: access-group 101
+      Inspect
+
+    Class-map: class-default (match-any)
+      Match: any
+      Drop (default action)
+        0 packets, 0 bytes
+
+

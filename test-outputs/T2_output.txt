@@ -1,0 +1,16 @@
+T2 - STU-PC1 tries the confidential DB (172.16.50.14)
+
+FW-DC deny counter BEFORE: access-list CAMPUS_IN line 17 extended deny ip any any(hitcnt=405) 0x12998d47
+FW-DC deny counter AFTER : access-list CAMPUS_IN line 17 extended deny ip any any(hitcnt=436) 0x6d89a869
+
+--- STU-PC1 ping ---
+ping -n 4 172.16.50.14
+
+Pinging 172.16.50.14 with 32 bytes of data:
+
+Request timed out.
+Request timed out.
+Request timed out.
+
+--- STU-PC1 browser http://172.16.50.14 ---
+{"content":"","responseType":7,"serverIp":"172.16.50.14","url":"http://172.16.50.14"}

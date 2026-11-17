@@ -1,0 +1,146 @@
+! ===== R-EDGE (Cisco 2911) - Campus edge: NAT, IPsec VPN, IOS IPS, OSPF, AAA =====
+! ---------------- PART A : enable the security licence, then reload ----------------
+enable
+configure terminal
+hostname R-EDGE
+license boot module c2900 technology-package securityk9
+! type  yes  when asked to accept the EULA
+end
+write memory
+reload
+! (press Enter to confirm reload, wait for the router to boot, then paste PART B)
+
+! ---------------- PART B : full configuration ----------------
+enable
+configure terminal
+no ip domain-lookup
+ip domain-name placement.srm.edu
+service password-encryption
+service timestamps log datetime msec
+enable secret Core@2026
+username localadmin privilege 15 secret Local@2026
+banner motd #*** PlaceGuard Edge Router - Authorised access only. All activity is logged. ***#
+!
+interface GigabitEthernet0/0
+ description Routed link to CORE-1 G0/1
+ ip address 10.10.200.1 255.255.255.252
+ ip nat inside
+ no shutdown
+interface GigabitEthernet0/1
+ description Routed link to CORE-2 G0/1
+ ip address 10.10.200.5 255.255.255.252
+ ip nat inside
+ no shutdown
+interface GigabitEthernet0/2
+ description Uplink to ISP (Internet)
+ ip address 203.0.113.2 255.255.255.248
+ ip nat outside
+ no shutdown
+exit
+!
+ip route 0.0.0.0 0.0.0.0 203.0.113.1
+!
+router ospf 1
+ router-id 1.1.1.1
+ network 10.10.200.0 0.0.0.7 area 0
+ default-information originate
+exit
+!
+! ---- VPN "interesting traffic" : campus + servers <-> recruiter HQ ----
+access-list 110 permit ip 10.10.0.0 0.0.255.255 192.168.50.0 0.0.0.255
+access-list 110 permit ip 172.16.50.0 0.0.0.255 192.168.50.0 0.0.0.255
+!
+! ---- NAT : PAT for campus, VPN traffic exempted, static NAT for portal ----
+access-list 120 deny ip 10.10.0.0 0.0.255.255 192.168.50.0 0.0.0.255
+access-list 120 deny ip 172.16.50.0 0.0.0.255 192.168.50.0 0.0.0.255
+access-list 120 permit ip 10.10.0.0 0.0.255.255 any
+access-list 120 permit ip 172.16.0.0 0.0.255.255 any
+ip nat inside source list 120 interface GigabitEthernet0/2 overload
+ip nat inside source static 172.16.70.10 203.0.113.5
+!
+! ---- Site-to-site IPsec VPN to TechNova HQ ----
+crypto isakmp policy 10
+ encryption aes 256
+ hash sha
+ authentication pre-share
+ group 5
+ lifetime 86400
+exit
+crypto isakmp key PG-Vpn-Key-2026 address 198.51.100.2
+crypto ipsec transform-set PG-TSET esp-aes 256 esp-sha-hmac
+crypto map PG-VPN-MAP 10 ipsec-isakmp
+ description Tunnel to TechNova recruiter HQ
+ set peer 198.51.100.2
+ set transform-set PG-TSET
+ match address 110
+exit
+interface GigabitEthernet0/2
+ crypto map PG-VPN-MAP
+exit
+!
+! ---- AAA with TACACS+ (falls back to local user if server unreachable) ----
+aaa new-model
+tacacs-server host 172.16.50.11 key PG-Tacacs-Key
+aaa authentication login default group tacacs+ local
+!
+! ---- SSH-only management from MGMT VLAN ----
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+access-list 15 permit 10.10.99.0 0.0.0.255
+line vty 0 4
+ access-class 15 in
+ transport input ssh
+ exec-timeout 10 0
+line con 0
+ exec-timeout 10 0
+ logging synchronous
+exit
+!
+! ---- Time + central logging ----
+ntp server 172.16.50.12
+logging host 172.16.50.12
+logging trap debugging
+end
+write memory
+
+! ---------------- PART C : IOS Intrusion Prevention System ----------------
+! (privileged mode) create the signature folder - press Enter at the prompt
+mkdir ipsdir
+configure terminal
+ip ips config location flash:ipsdir
+! (added after PT test) IPS on G0/2 also sees the DECRYPTED VPN traffic, so sig 2004 dropped
+! HQ -> campus pings (T7). ACL 130 tells IPS to skip trusted VPN traffic and inspect everything else.
+access-list 130 deny ip 192.168.50.0 0.0.0.255 10.10.0.0 0.0.255.255
+access-list 130 deny ip 192.168.50.0 0.0.0.255 172.16.50.0 0.0.0.255
+access-list 130 permit ip any any
+ip ips name PG-IPS list 130
+ip ips notify log
+ip ips signature-category
+ category all
+  retired true
+ exit
+ category ios_ips basic
+  retired false
+ exit
+exit
+! press Enter to accept the changes
+interface GigabitEthernet0/2
+ ip ips PG-IPS in
+exit
+ip ips signature-definition
+ signature 2004 0
+  status
+   retired false
+   enabled true
+  exit
+  engine
+   event-action produce-alert
+   event-action deny-packet-inline
+  exit
+ exit
+exit
+! press Enter to accept the changes
+end
+write memory

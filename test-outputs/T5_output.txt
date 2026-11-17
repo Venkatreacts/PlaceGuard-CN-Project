@@ -1,0 +1,83 @@
+T5 - Unknown laptop plugged into ACC-STUDENT Fa0/1 in place of STU-PC1
+
+Notes: STU-PC1's MAC 0002.4A9E.19A8 is the sticky secure MAC on Fa0/1. The laptop was given 10.10.10.151/24
+so it sends traffic as soon as it is plugged in (a laptop with no DHCP lease sends nothing in PT).
+The original UNKNOWN-LAPTOP object stopped transmitting after earlier API tests and was replaced by an identical
+Laptop-PT with the same name (new MAC 000A.F3AC.97EA). The same violation was also reproduced with STU-PC3's MAC (below).
+
+--- BEFORE (Fa0/1 recovered, laptop not yet plugged) ---
+ACC-STUDENT# show port-security interface FastEthernet0/1
+Port Security              : Enabled
+Port Status                : Secure-down
+Violation Mode             : Shutdown
+Aging Time                 : 0 mins
+Aging Type                 : Absolute
+SecureStatic Address Aging : Disabled
+Maximum MAC Addresses      : 1
+Total MAC Addresses        : 1
+Configured MAC Addresses   : 0
+Sticky MAC Addresses       : 1
+Last Source Address:Vlan   : 0001.C92A.0024:10
+Security Violation Count   : 1
+
+
+
+
+--- AFTER laptop plugged in ---
+ACC-STUDENT# show port-security interface FastEthernet0/1
+Port Security              : Enabled
+Port Status                : Secure-shutdown
+Violation Mode             : Shutdown
+Aging Time                 : 0 mins
+Aging Type                 : Absolute
+SecureStatic Address Aging : Disabled
+Maximum MAC Addresses      : 1
+Total MAC Addresses        : 1
+Configured MAC Addresses   : 0
+Sticky MAC Addresses       : 1
+Last Source Address:Vlan   : 000A.F3AC.97EA:10
+Security Violation Count   : 1
+
+
+
+ACC-STUDENT# show interfaces FastEthernet0/1 status
+Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/1     Student PCs        err-disabled 10         auto    auto  10/100BaseTX
+
+
+
+ACC-STUDENT# show port-security
+Secure Port MaxSecureAddr CurrentAddr SecurityViolation Security Action
+               (Count)       (Count)        (Count)
+--------------------------------------------------------------------
+        Fa0/1        1          1                 1         Shutdown
+        Fa0/2        1          1                 0         Shutdown
+        Fa0/3        1          1                 0         Shutdown
+       Fa0/10        1          1                 0         Shutdown
+----------------------------------------------------------------------
+
+
+
+--- Same test with STU-PC3 (MAC 0001.C92A.0024) moved to Fa0/1 ---
+ACC-STUDENT# show port-security interface FastEthernet0/1
+Port Security              : Enabled
+Port Status                : Secure-shutdown
+Violation Mode             : Shutdown
+Aging Time                 : 0 mins
+Aging Type                 : Absolute
+SecureStatic Address Aging : Disabled
+Maximum MAC Addresses      : 1
+Total MAC Addresses        : 1
+Configured MAC Addresses   : 0
+Sticky MAC Addresses       : 1
+Last Source Address:Vlan   : 0001.C92A.0024:10
+Security Violation Count   : 1
+
+
+
+ACC-STUDENT# show interfaces FastEthernet0/1 status
+Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/1     Student PCs        err-disabled 10         auto    auto  10/100BaseTX
+
+
+

@@ -1,0 +1,93 @@
+T8 attempt 1 (original config): CORE-1 powered off ~8 s into 'ping -n 40'
+
+CORE-2 BEFORE:
+CORE-2# show standby brief
+                     P indicates configured to preempt.
+                     |
+Interface   Grp  Pri P State    Active          Standby         Virtual IP
+Vl10        10   100 P Standby  10.10.10.2      local           10.10.10.1     
+Vl20        20   100 P Standby  10.10.20.2      local           10.10.20.1     
+Vl30        30   100 P Standby  10.10.30.2      local           10.10.30.1     
+Vl40        40   100 P Standby  10.10.40.2      local           10.10.40.1     
+Vl60        60   100 P Standby  10.10.60.2      local           10.10.60.1     
+Vl99        99   100 P Standby  10.10.99.2      local           10.10.99.1     
+Vl100       100  100 P Standby  10.10.100.2     local           10.10.100.1    
+
+
+
+--- STU-PC1 ---
+ping -n 40 172.16.70.10
+
+Pinging 172.16.70.10 with 32 bytes of data:
+
+Reply from 172.16.70.10: bytes=32 time=2ms TTL=126
+Reply from 172.16.70.10: bytes=32 time<1ms TTL=126
+Reply from 172.16.70.10: bytes=32 time<1ms TTL=126
+Reply from 172.16.70.10: bytes=32 time<1ms TTL=126
+Reply from 172.16.70.10: bytes=32 time<1ms TTL=126
+Reply from 172.16.70.10: bytes=32 time<1ms TTL=126
+Reply from 172.16.70.10: bytes=32 time=1ms TTL=126
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+
+Ping statistics for 172.16.70.10:
+    Packets: Sent = 40, Received = 7, Lost = 33 (83% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 0ms, Maximum = 2ms, Average = 0ms
+
+C:\>
+--- CORE-2 after CORE-1 off ---
+CORE-2# show standby brief
+                     P indicates configured to preempt.
+                     |
+Interface   Grp  Pri P State    Active          Standby         Virtual IP
+Vl10        10   100 P Active   local           unknown         10.10.10.1     
+Vl20        20   100 P Active   local           unknown         10.10.20.1     
+Vl30        30   100 P Active   local           unknown         10.10.30.1     
+Vl40        40   100 P Active   local           unknown         10.10.40.1     
+Vl60        60   100 P Active   local           unknown         10.10.60.1     
+Vl99        99   100 P Active   local           unknown         10.10.99.1     
+Vl100       100  100 P Active   local           unknown         10.10.100.1    
+
+
+
+--- FW-DC ARP (campus hosts still mapped to CORE-1 MAC 0060.4792.6007 via proxy-ARP) ---
+        CAMPUS 10.10.10.100 0060.4792.6007
+        CAMPUS 10.10.10.101 0060.4792.6007
+        CAMPUS 10.10.10.102 0060.4792.6007
+        CAMPUS 10.10.10.103 0060.4792.6007
+        CAMPUS 10.10.10.104 0060.4792.6007
+        CAMPUS 10.10.100.2 0060.4792.6007
+        CAMPUS 10.10.100.3 00D0.5890.D107
+        CAMPUS 10.10.100.4 0001.43A9.3901

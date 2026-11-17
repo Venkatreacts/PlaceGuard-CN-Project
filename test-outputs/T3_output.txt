@@ -1,0 +1,52 @@
+T3 - Recruiter Wi-Fi isolation (REC-LAPTOP1)
+IPs: {"STU-PC1":"10.10.10.101","STU-PC2":"10.10.10.103","STU-PC3":"10.10.10.102","INT-ROOM-1":"10.10.30.104","INT-ROOM-2":"10.10.30.105","PLC-OFFICER":"10.10.20.102","HQ-HR-PC":"192.168.50.11","HQ-INTERVIEWER":"192.168.50.10","REC-LAPTOP1":"10.10.40.105"}
+
+ipconfig
+
+Wireless0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: FE80::2D0:BCFF:FE87:744C
+   IPv6 Address....................: ::
+   IPv4 Address....................: 10.10.40.105
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: ::
+                                     10.10.40.1
+
+Bluetooth Connection:
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: ::
+   IPv6 Address....................: ::
+   IPv4 Address....................: 0.0.0.0
+   Subnet Mask.....................: 0.0.0.0
+   Default Gateway.................: ::
+                                     0.0.0.0
+
+C:\>ping -n 4 10.10.10.101
+
+Pinging 10.10.10.101 with 32 bytes of data:
+
+Reply from 10.10.40.2: Destination host unreachable.
+Reply from 10.10.40.2: Destination host unreachable.
+Reply from 10.10.40.2: Destination host unreachable.
+Reply from 10.10.40.2: Destination host unreachable.
+
+Ping statistics for 10.10.10.101:
+    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),
+
+C:\>ping -n 4 10.10.30.104
+
+Pinging 10.10.30.104 with 32 bytes of data:
+
+Request timed out.
+Reply from 10.10.30.104: bytes=32 time=22ms TTL=127
+Reply from 10.10.30.104: bytes=32 time=20ms TTL=127
+Reply from 10.10.30.104: bytes=32 time=19ms TTL=127
+
+Ping statistics for 10.10.30.104:
+    Packets: Sent = 4, Received = 3, Lost = 1 (25% loss),
+Approximate round trip times in milli-seconds:
+    Minimum = 19ms, Maximum = 22ms, Average = 20ms
+
+C:\>

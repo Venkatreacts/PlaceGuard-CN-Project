@@ -1,0 +1,27 @@
+T6 - Ping flood from Internet to portal public IP 203.0.113.5
+
+--- ATTACKER-PC (45.10.20.66) ---
+ping -n 4 203.0.113.5
+
+Pinging 203.0.113.5 with 32 bytes of data:
+
+Request timed out.
+Request timed out.
+Request timed out.
+
+--- R-EDGE console log lines (IPS) ---
+*Nov 13, 15:42:11.4242:  %IPS-4-SIGNATURE: Sig:2004 Subsig:0 Sev:25  [45.10.20.66 -> 203.0.113.5:0] RiskRating:25
+    IPS Rule Configuration
+      IPS name PG-IPS
+    IPS fail closed is disabled
+    IPS deny-action ips-interface is false
+    Fastpath ips is enabled
+        Inbound IPS rule is PG-IPS
+       Outgoing IPS rule is not set
+IPS Category CLI Configuration:
+    Category ios_ips basic
+*Nov 13, 15:42:17.4242:  %IPS-4-SIGNATURE: Sig:2004 Subsig:0 Sev:25  [45.10.20.66 -> 203.0.113.5:0] RiskRating:25
+*Nov 13, 15:42:23.4242:  %IPS-4-SIGNATURE: Sig:2004 Subsig:0 Sev:25  [45.10.20.66 -> 203.0.113.5:0] RiskRating:25
+
+--- PUBLIC-USER browser http://203.0.113.5 ---
+response: {"content":"<<title>PlaceGuard - SRM Placement Portal</title> ...>","responseType":3,"serverIp":"203.0.113.5","url":"http://203.0.113.5"}

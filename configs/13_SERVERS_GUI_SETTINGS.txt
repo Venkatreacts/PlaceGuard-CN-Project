@@ -1,0 +1,115 @@
+=====================================================================
+ SERVER & END-DEVICE SETTINGS (done in the Packet Tracer GUI tabs)
+=====================================================================
+For every server: Desktop > IP Configuration > Static. Then the Services tab.
+Turn OFF every service that is not listed for that server (least functionality).
+
+---------------------------------------------------------------
+DHCP-DNS-SRV   172.16.50.10 / 255.255.255.0  GW 172.16.50.1  DNS 172.16.50.10
+---------------------------------------------------------------
+Services > DHCP : Service ON. Add these pools (Pool name, Default Gateway,
+DNS Server, Start IP, Subnet Mask, Max users) - click "Add" for each:
+  STUDENTS   10.10.10.1  172.16.50.10  10.10.10.100  255.255.255.0  100
+  PLACEMENT  10.10.20.1  172.16.50.10  10.10.20.100  255.255.255.0  100
+  INTERVIEW  10.10.30.1  172.16.50.10  10.10.30.100  255.255.255.0  100
+  WIFI       10.10.40.1  172.16.50.10  10.10.40.100  255.255.255.0  100
+  IOT        10.10.60.1  172.16.50.10  10.10.60.100  255.255.255.0  100
+  (edit the default "serverPool" to: GW 172.16.50.1, start 172.16.50.200, max 20, Save)
+Services > DNS : Service ON. Add A records:
+  placement.srm.edu   172.16.70.10
+  mail.srm.edu        172.16.50.13
+  records.srm.edu     172.16.50.14
+  iot.srm.edu         10.10.60.10
+
+---------------------------------------------------------------
+AAA-SRV        172.16.50.11  GW 172.16.50.1
+---------------------------------------------------------------
+Services > AAA : Service ON.
+ Network Configuration (Client Name / Client IP / Secret / ServerType=Tacacs):
+   R-EDGE-A   10.10.200.1   PG-Tacacs-Key   Tacacs
+   R-EDGE-B   10.10.200.5   PG-Tacacs-Key   Tacacs
+   CORE-1     10.10.100.2   PG-Tacacs-Key   Tacacs
+   CORE-2     10.10.100.3   PG-Tacacs-Key   Tacacs
+ User Setup:  netadmin / NetAdmin@2026
+
+---------------------------------------------------------------
+LOG-NTP-SRV    172.16.50.12  GW 172.16.50.1
+---------------------------------------------------------------
+Services > SYSLOG : ON      Services > NTP : ON (Authentication off)
+
+---------------------------------------------------------------
+MAIL-SRV       172.16.50.13  GW 172.16.50.1
+---------------------------------------------------------------
+Services > EMAIL : SMTP ON, POP3 ON, Domain Name: srm.edu  (click Set)
+ Users (user / password):
+   student1 / stu123      tpo / tpo123      hr.technova / hr123
+
+---------------------------------------------------------------
+DB-SRV         172.16.50.14  GW 172.16.50.1
+---------------------------------------------------------------
+Services > HTTP : HTTP ON, HTTPS OFF. Edit index.html -> paste DB_index.html
+(Every other service OFF.)
+
+---------------------------------------------------------------
+PORTAL-SRV     172.16.70.10  GW 172.16.70.1  DNS 172.16.50.10   [DMZ]
+---------------------------------------------------------------
+Services > HTTP : HTTP ON, HTTPS ON. Edit index.html -> paste PORTAL_index.html
+Services > FTP  : ON. Add user  student / resume123  with Write, Read, List ticked.
+                  (delete or untick the default "cisco" user)
+
+---------------------------------------------------------------
+IOT-SRV        10.10.60.10  GW 10.10.60.1  DNS 172.16.50.10
+---------------------------------------------------------------
+Services > HTTP : leave HTTP ON. (Tested in PT 9.0.1: the IoT Registration Server "runs on top of
+                  the HTTP or HTTPS service"; with HTTP off the browser shows "Server Reset Connection".)
+Services > IoT : Registration Server ON (every other service except HTTP OFF).
+Then from PLC-OFFICER: Desktop > Web Browser > http://10.10.60.10
+  > "Sign up now" > user pgadmin / password Iot@2026 > Create.
+
+---------------------------------------------------------------
+ROGUE-DHCP (attack device, connect to ACC-STUDENT Fa0/10 only during demo)
+---------------------------------------------------------------
+IP 10.10.10.250/24. Services > DHCP ON, edit serverPool:
+  GW 10.10.10.250  DNS 10.10.10.250  Start 10.10.10.10  Mask 255.255.255.0  Save
+
+=====================================================================
+ END DEVICES
+=====================================================================
+STU-PC1..3, PLC-OFFICER, PLC-COORD, INT-ROOM-1/2 : IP Configuration > DHCP
+NETADMIN-PC : static 10.10.99.50 / 255.255.255.0  GW 10.10.99.1  DNS 172.16.50.10
+PUBLIC-USER : static 45.10.20.10 / 255.255.255.0  GW 45.10.20.1
+ATTACKER-PC : static 45.10.20.66 / 255.255.255.0  GW 45.10.20.1
+HQ-HR-PC, HQ-INTERVIEWER : DHCP (from R-RECRUITER)
+
+E-mail client (Desktop > Email > Configure Mail):
+  STU-PC1      : Name Student One, student1@srm.edu, servers 172.16.50.13, user student1 / stu123
+  PLC-OFFICER  : Name TPO Officer, tpo@srm.edu,      servers 172.16.50.13, user tpo / tpo123
+  HQ-HR-PC     : Name TechNova HR, hr.technova@srm.edu, servers 172.16.50.13, user hr.technova / hr123
+
+=====================================================================
+ WIRELESS (Recruiter Wi-Fi)
+=====================================================================
+AP-RECRUITER (AccessPoint-PT) > Config > Port 1:
+  SSID: SRM-Recruiter-WiFi    Authentication: WPA2-PSK
+  PSK Pass Phrase: PlaceGuard@2026     Encryption: AES
+REC-LAPTOP1/2: Physical tab > power OFF > drag out PT-LAPTOP-NM-1CFE >
+  drag in WPC300N > power ON. Config > Wireless0: SSID SRM-Recruiter-WiFi,
+  WPA2-PSK, PlaceGuard@2026, AES.  IP Configuration: DHCP.
+
+=====================================================================
+ SMART INTERVIEW HALL (IoT)
+=====================================================================
+Devices (End Devices > Home / Components): RFID Reader (rename RFID-READER),
+Door (HALL-DOOR), Siren (ALARM-SIREN), 2 x RFID Card (CARD-1001, CARD-2002).
+For RFID-READER, HALL-DOOR, ALARM-SIREN:
+  - If the device has no Ethernet port: Advanced > I/O Config > Network Adapter
+    = PT-IOT-NM-1CFE.  Cable it to ACC-INTERVIEW Fa0/11, Fa0/12, Fa0/13.
+  - Config > Settings > IP: DHCP.  IoT Server: Remote Server
+    Server address 10.10.60.10, user pgadmin, password Iot@2026 > Connect.
+RFID cards: open card > Attributes/Config > Card ID = 1001 (CARD-1001) and 2002 (CARD-2002).
+On PLC-OFFICER browser http://10.10.60.10 (login pgadmin) > Conditions > Add:
+  1. ACCESS-GRANTED : IF RFID-READER Card ID = 1001
+        THEN set RFID-READER Status = Valid ; HALL-DOOR Lock = Unlock ; ALARM-SIREN On = false
+  2. ACCESS-DENIED  : IF RFID-READER Card ID = 2002   (use "!= 1001" if your PT offers it)
+        THEN set RFID-READER Status = Invalid ; HALL-DOOR Lock = Lock ; ALARM-SIREN On = true
+Demo: hold ALT and drag a card onto the reader (or move it next to the reader).

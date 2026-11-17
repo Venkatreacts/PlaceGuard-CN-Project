@@ -1,0 +1,221 @@
+! ===== CORE-2 (Cisco 3560-24PS multilayer switch) =====
+! Role: inter-VLAN routing, HSRP STANDBY gateway, STP root secondary, OSPF, RBAC ACLs, DHCP relay
+enable
+configure terminal
+hostname CORE-2
+no ip domain-lookup
+ip domain-name placement.srm.edu
+service password-encryption
+service timestamps log datetime msec
+enable secret Core@2026
+username localadmin privilege 15 secret Local@2026
+banner motd #*** PlaceGuard Campus Core - Authorised access only. All activity is logged. ***#
+ip routing
+spanning-tree mode rapid-pvst
+!
+vlan 10
+ name STUDENTS
+vlan 20
+ name PLACEMENT
+vlan 30
+ name INTERVIEW
+vlan 40
+ name RECRUITER-WIFI
+vlan 60
+ name IOT
+vlan 99
+ name MGMT
+vlan 100
+ name FW-TRANSIT
+vlan 998
+ name PARKING
+vlan 999
+ name NATIVE
+exit
+spanning-tree vlan 10,20,30,40,60,99,100 root secondary
+!
+! ---- Trunks to the 4 access switches ----
+interface range FastEthernet0/1 - 4
+ description Trunk to access layer
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,60,99,999
+ switchport nonegotiate
+ no shutdown
+exit
+interface FastEthernet0/5
+ description To SW-TRANSIT (ASA firewall segment)
+ switchport mode access
+ switchport access vlan 100
+ no shutdown
+exit
+! ---- LACP EtherChannel to CORE-1 ----
+interface range FastEthernet0/23 - 24
+ description LACP member to CORE-1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,60,99,100,999
+ switchport nonegotiate
+ channel-group 1 mode active
+ no shutdown
+exit
+interface Port-channel1
+ description EtherChannel to CORE-1
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,60,99,100,999
+exit
+! ---- Unused ports: parked and shut ----
+interface range FastEthernet0/6 - 22
+ switchport mode access
+ switchport access vlan 998
+ shutdown
+exit
+interface GigabitEthernet0/2
+ shutdown
+exit
+! ---- Routed uplink to R-EDGE ----
+interface GigabitEthernet0/1
+ description Routed link to R-EDGE G0/1
+ no switchport
+ ip address 10.10.200.6 255.255.255.252
+ no shutdown
+exit
+interface Vlan10
+ ip address 10.10.10.3 255.255.255.0
+ ip helper-address 172.16.50.10
+ ip access-group STUDENT_IN in
+ standby version 2
+ standby 10 ip 10.10.10.1
+ standby 10 priority 100
+ standby 10 preempt
+ no shutdown
+exit
+interface Vlan20
+ ip address 10.10.20.3 255.255.255.0
+ ip helper-address 172.16.50.10
+ standby version 2
+ standby 20 ip 10.10.20.1
+ standby 20 priority 100
+ standby 20 preempt
+ no shutdown
+exit
+interface Vlan30
+ ip address 10.10.30.3 255.255.255.0
+ ip helper-address 172.16.50.10
+ ip access-group INTERVIEW_IN in
+ standby version 2
+ standby 30 ip 10.10.30.1
+ standby 30 priority 100
+ standby 30 preempt
+ no shutdown
+exit
+interface Vlan40
+ ip address 10.10.40.3 255.255.255.0
+ ip helper-address 172.16.50.10
+ ip access-group WIFI_IN in
+ standby version 2
+ standby 40 ip 10.10.40.1
+ standby 40 priority 100
+ standby 40 preempt
+ no shutdown
+exit
+interface Vlan60
+ ip address 10.10.60.3 255.255.255.0
+ ip helper-address 172.16.50.10
+ ip access-group IOT_IN in
+ standby version 2
+ standby 60 ip 10.10.60.1
+ standby 60 priority 100
+ standby 60 preempt
+ no shutdown
+exit
+interface Vlan99
+ ip address 10.10.99.3 255.255.255.0
+ standby version 2
+ standby 99 ip 10.10.99.1
+ standby 99 priority 100
+ standby 99 preempt
+ no shutdown
+exit
+interface Vlan100
+ ip address 10.10.100.3 255.255.255.248
+ standby version 2
+ standby 100 ip 10.10.100.1
+ standby 100 priority 100
+ standby 100 preempt
+ no shutdown
+exit
+interface Vlan1
+ shutdown
+exit
+!
+! ---- Role-based inter-VLAN access control (applied inbound on the SVIs) ----
+ip access-list extended STUDENT_IN
+ permit udp any any eq bootps
+ permit icmp 10.10.10.0 0.0.0.255 host 10.10.10.1
+ deny ip 10.10.10.0 0.0.0.255 10.10.0.0 0.0.255.255
+ permit ip 10.10.10.0 0.0.0.255 any
+exit
+ip access-list extended INTERVIEW_IN
+ permit udp any any eq bootps
+ deny ip 10.10.30.0 0.0.0.255 10.10.10.0 0.0.0.255
+ deny ip 10.10.30.0 0.0.0.255 10.10.60.0 0.0.0.255
+ deny ip 10.10.30.0 0.0.0.255 10.10.99.0 0.0.0.255
+ permit ip any any
+exit
+ip access-list extended WIFI_IN
+ permit udp any any eq bootps
+ permit icmp 10.10.40.0 0.0.0.255 host 10.10.40.1
+ permit ip 10.10.40.0 0.0.0.255 10.10.30.0 0.0.0.255
+ deny ip 10.10.40.0 0.0.0.255 10.10.0.0 0.0.255.255
+ permit ip 10.10.40.0 0.0.0.255 any
+exit
+ip access-list extended IOT_IN
+ ! (added after PT test) let the other core's HSRPv2 hellos in, otherwise both cores go Active for VLAN 60
+ permit udp any host 224.0.0.102 eq 1985
+ permit udp any any eq bootps
+ permit tcp 10.10.60.0 0.0.0.255 10.10.20.0 0.0.0.255 established
+ permit tcp 10.10.60.0 0.0.0.255 10.10.99.0 0.0.0.255 established
+ permit icmp 10.10.60.0 0.0.0.255 10.10.20.0 0.0.0.255 echo-reply
+ permit icmp 10.10.60.0 0.0.0.255 10.10.99.0 0.0.0.255 echo-reply
+ deny ip any any
+exit
+!
+! ---- Routing: server farm sits behind the ASA firewall ----
+ip route 172.16.50.0 255.255.255.0 10.10.100.4
+ip route 172.16.70.0 255.255.255.0 10.10.100.4
+router ospf 1
+ router-id 3.3.3.3
+ passive-interface default
+ no passive-interface GigabitEthernet0/1
+ no passive-interface Vlan100
+ network 10.10.0.0 0.0.255.255 area 0
+ redistribute static subnets
+exit
+!
+! ---- AAA (TACACS+ with local fallback) + SSH-only management ----
+aaa new-model
+tacacs-server host 172.16.50.11 key PG-Tacacs-Key
+aaa authentication login default group tacacs+ local
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+access-list 15 permit 10.10.99.0 0.0.0.255
+line vty 0 15
+ access-class 15 in
+ transport input ssh
+ exec-timeout 10 0
+line con 0
+ exec-timeout 10 0
+ logging synchronous
+exit
+ntp server 172.16.50.12
+logging host 172.16.50.12
+logging trap debugging
+end
+write memory

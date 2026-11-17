@@ -1,0 +1,18 @@
+! ===== SW-SERVERS (Cisco 2960) - server farm behind the ASA =====
+! Fa0/1 -> FW-DC G1/2 , Fa0/2..Fa0/6 -> DHCP-DNS, AAA, LOG-NTP, MAIL, DB servers
+enable
+configure terminal
+hostname SW-SERVERS
+no ip domain-lookup
+enable secret Acc@2026
+interface range FastEthernet0/2 - 6
+ switchport mode access
+ spanning-tree portfast
+ switchport port-security
+ switchport port-security mac-address sticky
+exit
+interface range FastEthernet0/7 - 24, GigabitEthernet0/1 - 2
+ shutdown
+exit
+end
+write memory

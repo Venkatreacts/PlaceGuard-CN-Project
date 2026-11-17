@@ -1,0 +1,21 @@
+B2 - Zero-trust management (SSH + TACACS+ on AAA-SRV)
+
+--- STU-PC1 (student VLAN 10) ---
+ssh -l netadmin 10.10.10.2
+
+% Connection timed out; remote host not responding
+C:\>
+
+--- NETADMIN-PC (MGMT VLAN 99, 10.10.99.50), password NetAdmin@2026 checked by TACACS+ ---
+ssh -l netadmin 10.10.99.2
+
+Password: 
+CORE-1>show users
+    Line       User       Host(s)              Idle       Location
+*  3 vty 0     netadmin   idle                 00:00:00 
+
+  Interface    User               Mode         Idle     Peer Address
+CORE-1>exit
+
+[Connection to 10.10.99.2 closed by foreign host]
+C:\>

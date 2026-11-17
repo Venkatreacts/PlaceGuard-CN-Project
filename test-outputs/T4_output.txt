@@ -1,0 +1,62 @@
+T4 - Rogue DHCP server (10.10.10.250, offers 10.10.10.10+ with gw 10.10.10.250) cabled to ACC-STUDENT Fa0/10; STU-PC2 set Static then DHCP
+
+--- STU-PC2 ipconfig ---
+ipconfig
+
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: FE80::2D0:58FF:FE67:8865
+   IPv6 Address....................: ::
+   IPv4 Address....................: 10.10.10.103
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: ::
+                                     10.10.10.1
+
+Bluetooth Connection:
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: ::
+   IPv6 Address....................: ::
+   IPv4 Address....................: 0.0.0.0
+   Subnet Mask.....................: 0.0.0.0
+   Default Gateway.................: ::
+                                     0.0.0.0
+
+C:\>
+ACC-STUDENT# show ip dhcp snooping
+Switch DHCP snooping is enabled
+DHCP snooping is configured on following VLANs:
+10,20,30,40,60
+Insertion of option 82 is disabled
+Option 82 on untrusted port is not allowed
+Verification of hwaddr field is enabled
+Interface                  Trusted    Rate limit (pps)
+-----------------------    -------    ----------------
+FastEthernet0/3            no         10              
+FastEthernet0/1            no         10              
+FastEthernet0/2            no         10              
+FastEthernet0/10           no         10              
+GigabitEthernet0/1         yes        unlimited       
+GigabitEthernet0/2         yes        unlimited       
+
+
+ACC-STUDENT# show ip dhcp snooping binding
+MacAddress          IpAddress        Lease(sec)  Type           VLAN  Interface
+------------------  ---------------  ----------  -------------  ----  -----------------
+00:02:4A:9E:19:A8   10.10.10.101     0           dhcp-snooping  10    FastEthernet0/1
+00:01:C9:2A:00:24   10.10.10.102     0           dhcp-snooping  10    FastEthernet0/3
+00:D0:58:67:88:65   10.10.10.103     0           dhcp-snooping  10    FastEthernet0/2
+Total number of bindings: 3
+
+
+ACC-STUDENT# show ip dhcp snooping statistics
+[status 2]
+
+
+ACC-STUDENT# show interfaces FastEthernet0/10 status
+Port      Name               Status       Vlan       Duplex  Speed Type
+Fa0/10    Spare student port connected    10         a-full  a-100 10/100BaseTX
+
+
+

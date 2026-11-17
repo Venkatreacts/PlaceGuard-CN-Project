@@ -1,0 +1,116 @@
+! ===== ACC-INTERVIEW (Cisco 2960-24TT access switch) =====
+! Uplinks: G0/1 -> CORE-1 Fa0/3 , G0/2 -> CORE-2 Fa0/3
+enable
+configure terminal
+hostname ACC-INTERVIEW
+no ip domain-lookup
+ip domain-name placement.srm.edu
+service password-encryption
+service timestamps log datetime msec
+enable secret Acc@2026
+username localadmin privilege 15 secret Local@2026
+banner motd #*** PlaceGuard Access Switch - Authorised access only ***#
+spanning-tree mode rapid-pvst
+!
+vlan 10
+ name STUDENTS
+vlan 20
+ name PLACEMENT
+vlan 30
+ name INTERVIEW
+vlan 40
+ name RECRUITER-WIFI
+vlan 60
+ name IOT
+vlan 99
+ name MGMT
+vlan 998
+ name PARKING
+vlan 999
+ name NATIVE
+exit
+!
+! ---- DHCP snooping (blocks rogue DHCP servers) ----
+ip dhcp snooping
+ip dhcp snooping vlan 10,20,30,40,60
+no ip dhcp snooping information option
+!
+! ---- Uplink trunks (trusted) ----
+interface range GigabitEthernet0/1 - 2
+ description Trunk uplinks to CORE-1 / CORE-2
+ switchport mode trunk
+ switchport trunk native vlan 999
+ switchport trunk allowed vlan 10,20,30,40,60,99,999
+ switchport nonegotiate
+ ip dhcp snooping trust
+ no shutdown
+exit
+interface range FastEthernet0/1 - 2
+ description Interview room PCs
+ switchport mode access
+ switchport access vlan 30
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 10
+ no shutdown
+exit
+interface FastEthernet0/10
+ description IoT registration server
+ switchport mode access
+ switchport access vlan 60
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 10
+ no shutdown
+exit
+interface range FastEthernet0/11 - 13
+ description Smart interview-hall IoT devices
+ switchport mode access
+ switchport access vlan 60
+ switchport port-security
+ switchport port-security maximum 1
+ switchport port-security mac-address sticky
+ switchport port-security violation shutdown
+ spanning-tree portfast
+ spanning-tree bpduguard enable
+ ip dhcp snooping limit rate 10
+ no shutdown
+exit
+! ---- Unused ports: parked in VLAN 998 and shut ----
+interface range FastEthernet0/3 - 9, FastEthernet0/14 - 24
+ switchport mode access
+ switchport access vlan 998
+ shutdown
+exit
+! ---- Management ----
+interface Vlan1
+ shutdown
+exit
+interface Vlan99
+ description Management
+ ip address 10.10.99.13 255.255.255.0
+ no shutdown
+exit
+ip default-gateway 10.10.99.1
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+access-list 15 permit 10.10.99.0 0.0.0.255
+line vty 0 15
+ access-class 15 in
+ login local
+ transport input ssh
+ exec-timeout 10 0
+line con 0
+ logging synchronous
+exit
+logging host 172.16.50.12
+end
+write memory

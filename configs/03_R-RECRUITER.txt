@@ -1,0 +1,105 @@
+! ===== R-RECRUITER (Cisco 2911) - TechNova HQ: IPsec VPN, Zone-Based Firewall, NAT, DHCP =====
+! ---------------- PART A : enable the security licence, then reload ----------------
+enable
+configure terminal
+hostname R-RECRUITER
+license boot module c2900 technology-package securityk9
+! type  yes  when asked to accept the EULA
+end
+write memory
+reload
+
+! ---------------- PART B : full configuration ----------------
+enable
+configure terminal
+no ip domain-lookup
+ip domain-name technova.com
+service password-encryption
+service timestamps log datetime msec
+enable secret Core@2026
+username localadmin privilege 15 secret Local@2026
+banner motd #*** TechNova Recruiter HQ Router - Authorised access only ***#
+!
+interface GigabitEthernet0/0
+ description Uplink to ISP
+ ip address 198.51.100.2 255.255.255.252
+ ip nat outside
+ no shutdown
+interface GigabitEthernet0/1
+ description TechNova HQ LAN
+ ip address 192.168.50.1 255.255.255.0
+ ip nat inside
+ no shutdown
+exit
+ip route 0.0.0.0 0.0.0.0 198.51.100.1
+!
+! ---- DHCP for HQ LAN (DNS = campus DNS over the VPN) ----
+ip dhcp excluded-address 192.168.50.1 192.168.50.9
+ip dhcp pool HQ-LAN
+ network 192.168.50.0 255.255.255.0
+ default-router 192.168.50.1
+ dns-server 172.16.50.10
+exit
+!
+! ---- VPN interesting traffic (mirror of R-EDGE ACL 110) ----
+access-list 110 permit ip 192.168.50.0 0.0.0.255 10.10.0.0 0.0.255.255
+access-list 110 permit ip 192.168.50.0 0.0.0.255 172.16.50.0 0.0.0.255
+!
+! ---- NAT with VPN exemption ----
+access-list 120 deny ip 192.168.50.0 0.0.0.255 10.10.0.0 0.0.255.255
+access-list 120 deny ip 192.168.50.0 0.0.0.255 172.16.50.0 0.0.0.255
+access-list 120 permit ip 192.168.50.0 0.0.0.255 any
+ip nat inside source list 120 interface GigabitEthernet0/0 overload
+!
+! ---- IPsec ----
+crypto isakmp policy 10
+ encryption aes 256
+ hash sha
+ authentication pre-share
+ group 5
+ lifetime 86400
+exit
+crypto isakmp key PG-Vpn-Key-2026 address 203.0.113.2
+crypto ipsec transform-set PG-TSET esp-aes 256 esp-sha-hmac
+crypto map PG-VPN-MAP 10 ipsec-isakmp
+ description Tunnel to SRM campus
+ set peer 203.0.113.2
+ set transform-set PG-TSET
+ match address 110
+exit
+interface GigabitEthernet0/0
+ crypto map PG-VPN-MAP
+exit
+!
+! ---- Zone-Based Policy Firewall: HQ may go out, nothing may come in uninvited ----
+access-list 101 permit ip 192.168.50.0 0.0.0.255 any
+class-map type inspect match-all HQ-OUTBOUND
+ match access-group 101
+exit
+policy-map type inspect HQ-OUT-POLICY
+ class type inspect HQ-OUTBOUND
+  inspect
+ exit
+exit
+zone security INSIDE
+exit
+zone security OUTSIDE
+exit
+zone-pair security IN-TO-OUT source INSIDE destination OUTSIDE
+ service-policy type inspect HQ-OUT-POLICY
+exit
+interface GigabitEthernet0/1
+ zone-member security INSIDE
+interface GigabitEthernet0/0
+ zone-member security OUTSIDE
+exit
+!
+crypto key generate rsa general-keys modulus 1024
+ip ssh version 2
+line vty 0 4
+ login local
+ transport input ssh
+line con 0
+ logging synchronous
+end
+write memory

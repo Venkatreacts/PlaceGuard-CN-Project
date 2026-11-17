@@ -1,0 +1,49 @@
+T1 - STU-PC1 legitimate portal access (PT 9.0.1, captured via PT API)
+
+--- STU-PC1 Command Prompt ---
+ipconfig
+
+FastEthernet0 Connection:(default port)
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: FE80::202:4AFF:FE9E:19A8
+   IPv6 Address....................: ::
+   IPv4 Address....................: 10.10.10.101
+   Subnet Mask.....................: 255.255.255.0
+   Default Gateway.................: ::
+                                     10.10.10.1
+
+Bluetooth Connection:
+
+   Connection-specific DNS Suffix..: 
+   Link-local IPv6 Address.........: ::
+   IPv6 Address....................: ::
+   IPv4 Address....................: 0.0.0.0
+   Subnet Mask.....................: 0.0.0.0
+   Default Gateway.................: ::
+                                     0.0.0.0
+
+C:\>nslookup placement.srm.edu
+
+Server: [172.16.50.10]
+Address:  172.16.50.10
+
+Non-authoritative answer:
+Name:   placement.srm.edu
+Address:   172.16.70.10
+           
+C:\>ping -n 4 placement.srm.edu
+
+Pinging 172.16.70.10 with 32 bytes of data:
+
+Request timed out.
+Request timed out.
+Request timed out.
+Request timed out.
+
+Ping statistics for 172.16.70.10:
+    Packets: Sent = 4, Received = 0, Lost = 4 (100% loss),
+
+C:\>
+--- STU-PC1 Web Browser http://placement.srm.edu (HttpClient result) ---
+{"content":"<html>\n<head><title>PlaceGuard - SRM Placement Portal</title></head>\n<body bgcolor=\"#0b1f3a\">\n<center>\n<font color=\"#38bdf8\" size=\"6\"><b>PlaceGuard</b></font><br>\n<font color=\"#ffffff\" size=\"4\">SRM Institute of Science and Technology - Placement Portal</font>\n<hr>\n<table border=\"1\" cellpadding=\"8\" bgcolor=\"#ffffff\" width=\"80%\">\n<tr bgcolor=\"#e0f2fe\"><td colspan=\"2\"><b>Upcoming Placement Drives - November 2026</b></td></tr>\n<tr><td>TechNova Corp</td><td>Software Engineer | 12 LPA | Interview Hall A | 11 Nov</td></tr>\n<tr><td>Quantix Labs</td><td>Network Engineer | 9 LPA | Interview Hall B | 12 Nov</td></tr>\n<tr><td>CloudArc Systems</td><td>Security Analyst | 10 LPA | Online + VPN | 13 Nov</td></tr>\n</table>\n<br>\n<table border=\"1\" cellpadding=\"8\" bgcolor=\"#ffffff\" width=\"80%\">\n<tr bgcolor=\"#dcfce7\"><td><b>How to apply</b></td></tr>\n<tr><td>1. Upload your resume to ftp://172.16.70.10 (user: student)<br>\n2. Offer letters are sent to your @srm.edu mailbox<br>\n3. Carry your RFID ID card - interview halls open only for registered candidates</td></tr>\n</table>\n<br>\n<font color=\"#94a3b8\" size=\"2\">This portal is hosted in the DMZ behind the FW-DC firewall. All access is logged.</font>\n</center>\n</body>\n</html>\n","responseType":3,"serverIp":"172.16.70.10","url":"http://placement.srm.edu"}
